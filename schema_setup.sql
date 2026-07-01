@@ -3,24 +3,35 @@
 
 -- Dimension: one row per location_id. Treat location_id as the primary key.
 -- TODO: complete the SELECT (location_id, zone, borough).
-CREATE OR REPLACE VIEW vw_dim_zones AS
+CREATE OR REPLACE VIEW dev_bader.vw_dim_zones AS
 SELECT
-    -- TODO
-FROM nyc_taxi.raw_zones;
+    z.location_id,
+    z.zone,
+    z.borough
+FROM nyc_taxi.raw_zones z;
 
 -- Fact: one row per taxi trip.
 --   - Exclude rows where fare_amount is less than 0.
 --   - Cast pickup_datetime to TIMESTAMP.
 --   - Keep the location IDs so the view can join to vw_dim_zones.
 -- TODO: complete the SELECT and the WHERE.
-CREATE OR REPLACE VIEW vw_fact_trips AS
+CREATE OR REPLACE VIEW dev_bader.vw_fact_trips AS
 SELECT
-    -- TODO
+    vendor_id,
+    pickup_datetime::timestamp AS pickup_datetime,
+    dropoff_datetime,
+    passenger_count,
+    pickup_location_id,
+    dropoff_location_id,
+    trip_distance,
+    fare_amount,
+    tip_amount,
+    payment_type
 FROM nyc_taxi.raw_trips
--- TODO: WHERE fare_amount >= 0
-;
+WHERE fare_amount >= 0;
 
 -- Join-readiness test (run after creating the views; it must run without error
 -- and return a count close to the vw_fact_trips row count):
 -- SELECT COUNT(*) FROM vw_fact_trips f
 -- JOIN vw_dim_zones d ON f.pickup_location_id = d.location_id;
+SELECT COUNT(*) FROM dev_bader.vw_fact_trips f JOIN dev_bader.vw_dim_zones d ON f.pickup_location_id = d.location_id;
