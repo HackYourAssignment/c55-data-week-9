@@ -2,25 +2,46 @@
 -- CREATE OR REPLACE VIEW lets you re-run this script while you iterate.
 
 -- Dimension: one row per location_id. Treat location_id as the primary key.
--- TODO: complete the SELECT (location_id, zone, borough).
 CREATE OR REPLACE VIEW vw_dim_zones AS
 SELECT
-    -- TODO
+    location_id,
+    borough,
+    zone,
+    service_zone
 FROM nyc_taxi.raw_zones;
 
 -- Fact: one row per taxi trip.
---   - Exclude rows where fare_amount is less than 0.
---   - Cast pickup_datetime to TIMESTAMP.
---   - Keep the location IDs so the view can join to vw_dim_zones.
--- TODO: complete the SELECT and the WHERE.
+-- Negative fare_amount rows are excluded.
+-- pickup_datetime is explicitly cast as TIMESTAMP.
 CREATE OR REPLACE VIEW vw_fact_trips AS
 SELECT
-    -- TODO
+    vendor_id,
+    pickup_datetime::TIMESTAMP AS pickup_datetime,
+    dropoff_datetime::TIMESTAMP AS dropoff_datetime,
+    passenger_count,
+    trip_distance,
+    pickup_location_id,
+    dropoff_location_id,
+    fare_amount,
+    extra,
+    mta_tax,
+    tip_amount,
+    tolls_amount,
+    improvement_surcharge,
+    total_amount,
+    payment_type,
+    trip_type
 FROM nyc_taxi.raw_trips
--- TODO: WHERE fare_amount >= 0
-;
+WHERE fare_amount >= 0;
 
--- Join-readiness test (run after creating the views; it must run without error
--- and return a count close to the vw_fact_trips row count):
--- SELECT COUNT(*) FROM vw_fact_trips f
--- JOIN vw_dim_zones d ON f.pickup_location_id = d.location_id;
+
+-- Verification: fact view row count after removing negative fares.
+SELECT COUNT(*) AS fact_trip_count
+FROM vw_fact_trips;
+
+
+-- Verification: join-readiness test.
+SELECT COUNT(*) AS joined_trip_count
+FROM vw_fact_trips AS f
+INNER JOIN vw_dim_zones AS d
+    ON f.pickup_location_id = d.location_id;
