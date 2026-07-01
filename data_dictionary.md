@@ -6,7 +6,7 @@ Document both views. State the grain in one sentence, identify the keys, and lis
 
 - **Grain:** (one row per taxi trip)
 - **Primary key:** (none)
-- **Foreign keys:** (pickup_location_id, dropoff_location_id)
+- **Foreign keys:** (pickup_location_id, dropoff_location_id) both linking to vw_dim_zones.location_id
 - **Measures:** (fare_amount, trip_distance, tip_amount, passenger_count)
 
 ## vw_dim_zones
