@@ -5,7 +5,9 @@
 -- TODO: complete the SELECT (location_id, zone, borough).
 CREATE OR REPLACE VIEW vw_dim_zones AS
 SELECT
-    -- TODO
+    location_id,
+    zone,
+    borough
 FROM nyc_taxi.raw_zones;
 
 -- Fact: one row per taxi trip.
@@ -15,12 +17,25 @@ FROM nyc_taxi.raw_zones;
 -- TODO: complete the SELECT and the WHERE.
 CREATE OR REPLACE VIEW vw_fact_trips AS
 SELECT
-    -- TODO
+    vendor_id,
+    pickup_datetime::TIMESTAMP AS pickup_datetime,
+    dropoff_datetime,
+    pickup_location_id,
+    dropoff_location_id,
+    passenger_count,
+    trip_distance,
+    fare_amount,
+    tip_amount,
+    total_amount,
+    payment_type
 FROM nyc_taxi.raw_trips
--- TODO: WHERE fare_amount >= 0
-;
+WHERE fare_amount >= 0;
 
 -- Join-readiness test (run after creating the views; it must run without error
 -- and return a count close to the vw_fact_trips row count):
 -- SELECT COUNT(*) FROM vw_fact_trips f
 -- JOIN vw_dim_zones d ON f.pickup_location_id = d.location_id;
+SELECT COUNT(*)
+FROM vw_fact_trips f
+JOIN vw_dim_zones d
+    ON f.pickup_location_id = d.location_id;

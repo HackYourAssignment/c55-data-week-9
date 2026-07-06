@@ -4,14 +4,14 @@ Document both views. State the grain in one sentence, identify the keys, and lis
 
 ## vw_fact_trips
 
-- **Grain:** TODO (one sentence, e.g. "One row per ...")
-- **Primary key:** TODO
-- **Foreign keys:** TODO
-- **Measures:** TODO (columns you would SUM or AVG)
+- **Grain:** One row represents one taxi trip.
+- **Primary key:** There is no primary key . 
+- **Foreign keys:** pickup_location_id and dropoff_location_id and both link to vw_dim_zones.location_id
+- **Measures:** fare_amount , trip_distance , tip_amount ,total_amount , passenger_count.
 
 ## vw_dim_zones
 
-- **Grain:** TODO
-- **Primary key:** TODO
-- **Foreign keys:** TODO (or "none")
-- **Measures:** TODO (or "none, descriptive attributes only")
+- **Grain:** One row represents one taxi zone
+- **Primary key:** location_id
+- **Foreign keys:** None
+- **Measures:** None. descriptive attributes only .
