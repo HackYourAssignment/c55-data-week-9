@@ -46,14 +46,25 @@ fi
 ((score += l1))
 pass "Level 1: required files ($l1/10 pts)"
 
-# Helper: returns true when a file is non-empty and all TODO placeholders have
-# been removed. The assignment instruction is "replace every TODO" — any
-# remaining occurrence of the word TODO (case-insensitive) means the file is
-# still a scaffold stub.
+# Helper: returns true when a file has real content and no *unreplaced* TODO
+# placeholder remains. A completed query left below the scaffold's "-- TODO:"
+# guide comment still counts as filled: SQL line-comments are stripped before
+# the check, so leaving the guide comment in place is harmless. Only a line
+# whose content *begins* with TODO (an unreplaced markdown placeholder such as
+# "TODO: what did you ask?") marks the file a stub. The instruction line
+# "...Replace every TODO." (TODO not at line start) is fine.
 file_is_filled() {
   local f="$1"
   [[ -s "$f" ]] || return 1
-  grep -qiE "\bTODO\b" "$f" && return 1
+  # Substantive body: drop SQL line-comments and blank lines.
+  local body
+  body="$(sed -E 's/--.*$//' "$f" | grep -vE '^[[:space:]]*$')"
+  [[ -n "$body" ]] || return 1
+  # An unreplaced placeholder is a line whose content starts with TODO,
+  # optionally behind markdown heading / quote / list markers.
+  if printf '%s\n' "$body" | grep -qiE '^[[:space:]]*([#>*-]+[[:space:]]*)?TODO\b'; then
+    return 1
+  fi
   return 0
 }
 
@@ -104,14 +115,14 @@ if file_is_filled "$ss"; then
   ((l3 += 4)); pass "schema_setup.sql: file filled (no stub TODOs)"
 
   # 3a: creates vw_dim_zones
-  if grep -qiE "VIEW[[:space:]]+vw_dim_zones" "$ss"; then
+  if grep -qiE "VIEW[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*\.)?vw_dim_zones\b" "$ss"; then
     ((l3 += 5)); pass "schema_setup.sql: vw_dim_zones view defined"
   else
     fail "schema_setup.sql: vw_dim_zones view not found — check spelling (Task 2)"
   fi
 
   # 3b: creates vw_fact_trips
-  if grep -qiE "VIEW[[:space:]]+vw_fact_trips" "$ss"; then
+  if grep -qiE "VIEW[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*\.)?vw_fact_trips\b" "$ss"; then
     ((l3 += 5)); pass "schema_setup.sql: vw_fact_trips view defined"
   else
     fail "schema_setup.sql: vw_fact_trips view not found — check spelling (Task 2)"
