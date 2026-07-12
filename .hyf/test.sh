@@ -37,13 +37,13 @@ for f in "${required_files[@]}"; do
     pass "found $f"
   else
     fail "missing $f"
-    ((missing += 1))
+    missing=$((missing + 1))
   fi
 done
 if [[ "$missing" -eq 0 ]]; then
   l1=10
 fi
-((score += l1))
+score=$((score + l1))
 pass "Level 1: required files ($l1/10 pts)"
 
 # Helper: returns true when a file has real content and no *unreplaced* TODO
@@ -72,25 +72,25 @@ file_is_filled() {
 l2=0
 vq="$REPO_ROOT/validation_queries.sql"
 if file_is_filled "$vq"; then
-  ((l2 += 4)); pass "validation_queries.sql: file filled (no stub TODOs)"
+  l2=$((l2 + 4)); pass "validation_queries.sql: file filled (no stub TODOs)"
 
   # 2a: duplicate check — HAVING COUNT
   if grep -qiE "HAVING[[:space:]]+COUNT" "$vq"; then
-    ((l2 += 4)); pass "validation_queries.sql: HAVING COUNT pattern found (duplicate check)"
+    l2=$((l2 + 4)); pass "validation_queries.sql: HAVING COUNT pattern found (duplicate check)"
   else
     fail "validation_queries.sql: missing HAVING COUNT(*) > 1 for the duplicate check (Task 1.1)"
   fi
 
   # 2b: null integrity — IS NULL
   if grep -qiE "[[:space:]]IS[[:space:]]+NULL" "$vq"; then
-    ((l2 += 4)); pass "validation_queries.sql: IS NULL check found (null integrity)"
+    l2=$((l2 + 4)); pass "validation_queries.sql: IS NULL check found (null integrity)"
   else
     fail "validation_queries.sql: missing IS NULL check for null pickup/dropoff location IDs (Task 1.2)"
   fi
 
   # 2c: range validation — MIN( or MAX( and a negative fare check
   if grep -qiE "MIN\s*\(|MAX\s*\(" "$vq" || grep -qiE "fare_amount[[:space:]]*<[[:space:]]*0" "$vq"; then
-    ((l2 += 4)); pass "validation_queries.sql: range check found (MIN/MAX or negative-fare count)"
+    l2=$((l2 + 4)); pass "validation_queries.sql: range check found (MIN/MAX or negative-fare count)"
   else
     fail "validation_queries.sql: missing MIN/MAX or fare_amount < 0 for range validation (Task 1.3)"
   fi
@@ -98,32 +98,32 @@ if file_is_filled "$vq"; then
   # 2d: relationship check — LEFT JOIN + IS NULL (or NOT EXISTS)
   # The assignment warns explicitly against NOT IN, so reward the safer pattern.
   if (grep -qiE "LEFT[[:space:]]+JOIN" "$vq" && grep -qiE "[[:space:]]IS[[:space:]]+NULL" "$vq") || grep -qiE "NOT[[:space:]]+EXISTS" "$vq"; then
-    ((l2 += 4)); pass "validation_queries.sql: LEFT JOIN … IS NULL / NOT EXISTS orphan check (Task 1.4)"
+    l2=$((l2 + 4)); pass "validation_queries.sql: LEFT JOIN … IS NULL / NOT EXISTS orphan check (Task 1.4)"
   else
     fail "validation_queries.sql: missing orphaned-key check — use LEFT JOIN nyc_taxi.raw_zones … WHERE z.location_id IS NULL (or NOT EXISTS). Do not use NOT IN. (Task 1.4)"
   fi
 else
   fail "validation_queries.sql: file is empty or still contains unfilled TODO stubs"
 fi
-((score += l2))
+score=$((score + l2))
 pass "Level 2: Task 1 validation queries ($l2/20 pts)"
 
 # ── Level 3 (30 pts): Task 2 – schema_setup.sql ─────────────────────────────
 l3=0
 ss="$REPO_ROOT/schema_setup.sql"
 if file_is_filled "$ss"; then
-  ((l3 += 4)); pass "schema_setup.sql: file filled (no stub TODOs)"
+  l3=$((l3 + 4)); pass "schema_setup.sql: file filled (no stub TODOs)"
 
   # 3a: creates vw_dim_zones
   if grep -qiE "VIEW[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*\.)?vw_dim_zones\b" "$ss"; then
-    ((l3 += 5)); pass "schema_setup.sql: vw_dim_zones view defined"
+    l3=$((l3 + 5)); pass "schema_setup.sql: vw_dim_zones view defined"
   else
     fail "schema_setup.sql: vw_dim_zones view not found — check spelling (Task 2)"
   fi
 
   # 3b: creates vw_fact_trips
   if grep -qiE "VIEW[[:space:]]+([a-zA-Z_][a-zA-Z0-9_]*\.)?vw_fact_trips\b" "$ss"; then
-    ((l3 += 5)); pass "schema_setup.sql: vw_fact_trips view defined"
+    l3=$((l3 + 5)); pass "schema_setup.sql: vw_fact_trips view defined"
   else
     fail "schema_setup.sql: vw_fact_trips view not found — check spelling (Task 2)"
   fi
@@ -135,9 +135,9 @@ if file_is_filled "$ss"; then
      (grep -qiE "WHERE" "$ss" && grep -qiE "fare_amount" "$ss" && grep -qiE "[><!]=?" "$ss"); then
     # Tighter check: must see fare_amount in a WHERE or filter context
     if grep -iE "WHERE.*fare_amount|fare_amount.*WHERE" "$ss" | grep -qiE "[><!]=?[[:space:]]*0"; then
-      ((l3 += 8)); pass "schema_setup.sql: negative fare filter (fare_amount >= 0) present in vw_fact_trips"
+      l3=$((l3 + 8)); pass "schema_setup.sql: negative fare filter (fare_amount >= 0) present in vw_fact_trips"
     elif grep -qiE "fare_amount[[:space:]]*>=[[:space:]]*0" "$ss"; then
-      ((l3 += 8)); pass "schema_setup.sql: negative fare filter (fare_amount >= 0) present in vw_fact_trips"
+      l3=$((l3 + 8)); pass "schema_setup.sql: negative fare filter (fare_amount >= 0) present in vw_fact_trips"
     else
       fail "schema_setup.sql: vw_fact_trips must filter out negative fares (WHERE fare_amount >= 0) — this is the data cleaning step (Task 2)"
     fi
@@ -147,25 +147,25 @@ if file_is_filled "$ss"; then
 
   # 3d: TIMESTAMP cast on pickup_datetime
   if grep -qiE "pickup_datetime::TIMESTAMP|CAST\s*\([^)]*pickup_datetime[^)]*AS\s+TIMESTAMP" "$ss"; then
-    ((l3 += 8)); pass "schema_setup.sql: pickup_datetime::TIMESTAMP cast present in vw_fact_trips"
+    l3=$((l3 + 8)); pass "schema_setup.sql: pickup_datetime::TIMESTAMP cast present in vw_fact_trips"
   else
     fail "schema_setup.sql: vw_fact_trips must cast pickup_datetime as TIMESTAMP (pickup_datetime::TIMESTAMP) — required for time-pattern queries in Task 4 (Task 2)"
   fi
 else
   fail "schema_setup.sql: file is empty or still contains unfilled TODO stubs"
 fi
-((score += l3))
+score=$((score + l3))
 pass "Level 3: Task 2 star schema views ($l3/30 pts)"
 
 # ── Level 4 (15 pts): Task 3 – data_dictionary.md ───────────────────────────
 l4=0
 dd="$REPO_ROOT/data_dictionary.md"
 if file_is_filled "$dd"; then
-  ((l4 += 5)); pass "data_dictionary.md: file filled (no stub TODOs)"
+  l4=$((l4 + 5)); pass "data_dictionary.md: file filled (no stub TODOs)"
 
   # 4a: grain statement for at least one view
   if grep -qiE "\bGrain\b" "$dd"; then
-    ((l4 += 5)); pass "data_dictionary.md: 'Grain' heading/label present"
+    l4=$((l4 + 5)); pass "data_dictionary.md: 'Grain' heading/label present"
   else
     fail "data_dictionary.md: missing 'Grain' label — state what one row represents for each view (Task 3)"
   fi
@@ -175,51 +175,51 @@ if file_is_filled "$dd"; then
   grep -qiE "(primary[[:space:]]+key|Primary key)" "$dd" && pk_ok=true
   grep -qiE "(measure|fare_amount|tip_amount|total_amount)" "$dd" && meas_ok=true
   if [[ "$pk_ok" = true ]]; then
-    ((l4 += 3)); pass "data_dictionary.md: primary key documented"
+    l4=$((l4 + 3)); pass "data_dictionary.md: primary key documented"
   else
     fail "data_dictionary.md: no primary key label found — identify the key column(s) for each view (Task 3)"
   fi
   if [[ "$meas_ok" = true ]]; then
-    ((l4 += 2)); pass "data_dictionary.md: measures list includes at least one aggregatable column"
+    l4=$((l4 + 2)); pass "data_dictionary.md: measures list includes at least one aggregatable column"
   else
     fail "data_dictionary.md: measures not listed — name the columns you can SUM or AVG (fare_amount, tip_amount, etc.) (Task 3)"
   fi
 else
   fail "data_dictionary.md: file is empty or still contains unfilled TODO stubs"
 fi
-((score += l4))
+score=$((score + l4))
 pass "Level 4: Task 3 data dictionary ($l4/15 pts)"
 
 # ── Level 5 (15 pts): Task 4 – verification_results.sql ─────────────────────
 l5=0
 vr="$REPO_ROOT/verification_results.sql"
 if file_is_filled "$vr"; then
-  ((l5 += 3)); pass "verification_results.sql: file filled (no stub TODOs)"
+  l5=$((l5 + 3)); pass "verification_results.sql: file filled (no stub TODOs)"
 
   # 5a: volume / borough query
   if grep -qiE "borough" "$vr"; then
-    ((l5 += 4)); pass "verification_results.sql: borough-level query found (Task 4.1)"
+    l5=$((l5 + 4)); pass "verification_results.sql: borough-level query found (Task 4.1)"
   else
     fail "verification_results.sql: no borough query — question 1 asks for row counts per borough via vw_dim_zones (Task 4.1)"
   fi
 
   # 5b: revenue / fare query
   if grep -qiE "fare_amount" "$vr"; then
-    ((l5 += 4)); pass "verification_results.sql: fare_amount revenue query found (Task 4.2)"
+    l5=$((l5 + 4)); pass "verification_results.sql: fare_amount revenue query found (Task 4.2)"
   else
     fail "verification_results.sql: no revenue query — question 2 asks for highest total fare_amount by zone (Task 4.2)"
   fi
 
   # 5c: time pattern — day of week or hour of day
   if grep -qiE "DOW|day_of_week|EXTRACT.*DOW|DATE_PART.*DOW|EXTRACT.*HOUR|DATE_PART.*HOUR|to_char.*D|to_char.*HH" "$vr"; then
-    ((l5 += 4)); pass "verification_results.sql: time-pattern query found (DOW or HOUR extraction) (Task 4.4)"
+    l5=$((l5 + 4)); pass "verification_results.sql: time-pattern query found (DOW or HOUR extraction) (Task 4.4)"
   else
     fail "verification_results.sql: missing time-pattern query — question 4 asks for day-of-week and hour-of-day tip totals using EXTRACT(DOW …) or DATE_PART (Task 4.4)"
   fi
 else
   fail "verification_results.sql: file is empty or still contains unfilled TODO stubs"
 fi
-((score += l5))
+score=$((score + l5))
 pass "Level 5: Task 4 verification queries ($l5/15 pts)"
 
 # ── Level 6 (5 pts): borough screenshot present ─────────────────────────────
@@ -234,7 +234,7 @@ check_screenshot_is_png "$shot_png" && l6=5 || {
     fi
   done
 }
-((score += l6))
+score=$((score + l6))
 pass "Level 6: borough screenshot ($l6/5 pts)"
 
 # ── Level 7 (5 pts): AI_ASSIST.md filled in ─────────────────────────────────
@@ -243,10 +243,10 @@ ai="$REPO_ROOT/AI_ASSIST.md"
 if file_is_filled "$ai"; then
   # Check all four required section headings from the assignment template
   sections=0
-  grep -qiE "^##[[:space:]]+The[[:space:]]+problem" "$ai" && ((sections += 1))
-  grep -qiE "^##[[:space:]]+The[[:space:]]+prompt" "$ai" && ((sections += 1))
-  grep -qiE "^##[[:space:]]+The[[:space:]]+response" "$ai" && ((sections += 1))
-  grep -qiE "^##[[:space:]]+Reflection" "$ai" && ((sections += 1))
+  grep -qiE "^##[[:space:]]+The[[:space:]]+problem" "$ai" && sections=$((sections + 1))
+  grep -qiE "^##[[:space:]]+The[[:space:]]+prompt" "$ai" && sections=$((sections + 1))
+  grep -qiE "^##[[:space:]]+The[[:space:]]+response" "$ai" && sections=$((sections + 1))
+  grep -qiE "^##[[:space:]]+Reflection" "$ai" && sections=$((sections + 1))
 
   chars=$(wc -c < "$ai" | tr -d ' ')
 
@@ -263,7 +263,7 @@ if file_is_filled "$ai"; then
 else
   fail "AI_ASSIST.md: file is empty or still contains unfilled TODO stubs"
 fi
-((score += l7))
+score=$((score + l7))
 pass "Level 7: Task 5 AI log ($l7/5 pts)"
 
 # ── Final result ─────────────────────────────────────────────────────────────
