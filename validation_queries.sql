@@ -42,7 +42,6 @@ SELECT
 FROM nyc_taxi.raw_trips AS t
 LEFT JOIN nyc_taxi.raw_zones AS z
     ON t.pickup_location_id = z.location_id
-WHERE t.pickup_location_id IS NOT NULL
   AND z.location_id IS NULL
 GROUP BY t.pickup_location_id
 ORDER BY orphaned_trip_count DESC;
