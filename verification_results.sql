@@ -75,13 +75,11 @@ ORDER BY total_trips DESC;
 
 -- 4a. Time patterns: day of the week with the highest total tip_amount
 SELECT
-    TO_CHAR(t.pickup_datetime, 'Day') AS day_of_week,
+    TO_CHAR(MIN(t.pickup_datetime), 'Day') AS day_of_week,
     EXTRACT(DOW FROM t.pickup_datetime) AS day_num,
     SUM(t.tip_amount) AS total_tip_amount
 FROM vw_fact_trips AS t
-GROUP BY
-    TO_CHAR(t.pickup_datetime, 'Day'),
-    EXTRACT(DOW FROM t.pickup_datetime)
+GROUP BY EXTRACT(DOW FROM t.pickup_datetime)
 ORDER BY total_tip_amount DESC
 LIMIT 1;
 
